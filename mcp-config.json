@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "memory-markets": {
+      "command": "npx",
+      "args": ["tsx", "src/mcp/server.ts"],
+      "cwd": ".",
+      "env": {
+        "AI_PROVIDER": "openrouter",
+        "OPENROUTER_API_KEY": "your-openrouter-key-here",
+        "AGENT_PRIVATE_KEY": "your-agent-private-key-here"
+      }
+    }
+  }
+}

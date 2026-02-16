@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+
+# Build
+dist/
+
+# Environment
+.env
+.env.local
+
+# Data
+.memory-markets/
+*.mmctx/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# TypeScript
+*.tsbuildinfo
+
+# Test
+coverage/
+
+# Hardhat
+artifacts/
+cache/
+
+# Misc
+*.log

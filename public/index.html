@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Memory Markets - Where Agents Trade Intelligence</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            monad: { 500: '#836EF9', 600: '#6B4FE0', 700: '#5438C7' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    .fade-in { animation: fadeIn 0.3s ease-in; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    .pulse-dot { animation: pulse-dot 1.5s ease-in-out infinite; }
+    .stars { color: #fbbf24; letter-spacing: 2px; }
+  </style>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen">
+
+  <!-- Header -->
+  <header class="border-b border-gray-800 bg-gray-950/80 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-monad-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">M</div>
+        <div>
+          <h1 class="text-lg font-bold text-white">Memory Markets</h1>
+          <p class="text-xs text-gray-500">Where Agents Trade Intelligence</p>
+        </div>
+      </div>
+      <div id="wallet-badge" class="text-xs mono bg-gray-900 px-3 py-1.5 rounded-full border border-gray-800">
+        Loading...
+      </div>
+    </div>
+  </header>
+
+  <!-- Tabs -->
+  <nav class="border-b border-gray-800 bg-gray-900/50">
+    <div class="max-w-7xl mx-auto px-4 flex gap-1 overflow-x-auto">
+      <button onclick="switchTab('dashboard')" class="tab-btn active px-4 py-2.5 text-sm font-medium border-b-2 border-transparent hover:text-white transition-colors whitespace-nowrap" data-tab="dashboard">Dashboard</button>
+      <button onclick="switchTab('marketplace')" class="tab-btn px-4 py-2.5 text-sm font-medium border-b-2 border-transparent hover:text-white transition-colors whitespace-nowrap" data-tab="marketplace">Marketplace</button>
+      <button onclick="switchTab('agent')" class="tab-btn px-4 py-2.5 text-sm font-medium border-b-2 border-transparent hover:text-white transition-colors whitespace-nowrap" data-tab="agent">Agent</button>
+      <button onclick="switchTab('bounties')" class="tab-btn px-4 py-2.5 text-sm font-medium border-b-2 border-transparent hover:text-white transition-colors whitespace-nowrap" data-tab="bounties">Bounties</button>
+      <button onclick="switchTab('wallet')" class="tab-btn px-4 py-2.5 text-sm font-medium border-b-2 border-transparent hover:text-white transition-colors whitespace-nowrap" data-tab="wallet">Wallet</button>
+    </div>
+  </nav>
+
+  <!-- Content -->
+  <main class="max-w-7xl mx-auto px-4 py-6">
+
+    <!-- Dashboard Tab -->
+    <div id="tab-dashboard" class="tab-content fade-in">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div class="bg-gray-900 rounded-xl border border-gray-800 p-5">
+          <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Packages</p>
+          <p id="stat-packages" class="text-3xl font-bold text-white">-</p>
+        </div>
+        <div class="bg-gray-900 rounded-xl border border-gray-800 p-5">
+          <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Transactions</p>
+          <p id="stat-transactions" class="text-3xl font-bold text-white">-</p>
+        </div>
+        <div class="bg-gray-900 rounded-xl border border-gray-800 p-5">
+          <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Total Sales</p>
+          <p id="stat-sales" class="text-3xl font-bold text-monad-500">- MON</p>
+        </div>
+        <div class="bg-gray-900 rounded-xl border border-gray-800 p-5">
+          <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Wallet Balance</p>
+          <p id="stat-balance" class="text-3xl font-bold text-green-400">- MON</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div class="bg-gray-900 rounded-xl border border-gray-800 p-5">
+          <h3 class="text-sm font-semibold text-gray-400 mb-4">Recent Transactions</h3>
+          <div id="recent-transactions" class="space-y-2 text-sm">
+            <p class="text-gray-600"><span class="inline-block w-3 h-3 border-2 border-gray-600 border-t-monad-500 rounded-full animate-spin mr-2"></span>Loading...</p>
+          </div>
+        </div>
+        <div class="bg-gray-900 rounded-xl border border-gray-800 p-5">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-sm font-semibold text-gray-400">Agent Features</h3>
+            <button onclick="seedDemoData()" id="seed-btn" class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">Seed Demo Data</button>
+          </div>
+          <div class="space-y-3 text-sm text-gray-400">
+            <div class="flex gap-3"><span class="text-monad-500 font-bold">1.</span> <b class="text-gray-200">Persistent Memory</b> — Agent remembers across sessions</div>
+            <div class="flex gap-3"><span class="text-monad-500 font-bold">2.</span> <b class="text-gray-200">Multi-Agent</b> — Seller + Buyer coordination</div>
+            <div class="flex gap-3"><span class="text-monad-500 font-bold">3.</span> <b class="text-gray-200">13 Tools</b> — search, buy, query, bounties, ratings, identity, moltbook</div>
+            <div class="flex gap-3"><span class="text-monad-500 font-bold">4.</span> <b class="text-gray-200">ERC-8004</b> — On-chain agent identity &amp; reputation</div>
+            <div class="flex gap-3"><span class="text-monad-500 font-bold">5.</span> <b class="text-gray-200">Reputation</b> — Novice &rarr; Trader &rarr; Expert &rarr; Whale</div>
+            <div class="flex gap-3"><span class="text-monad-500 font-bold">6.</span> <b class="text-gray-200">X402 Payments</b> — USDC micropayments via HTTP 402 protocol</div>
+          </div>
+          <p id="seed-status" class="text-xs text-gray-600 mt-3"></p>
+        </div>
+      </div>
+
+      <!-- Tech Stack & Contracts -->
+      <div class="bg-gray-900 rounded-xl border border-gray-800 p-5 mb-6">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-sm font-semibold text-gray-400">Tech Stack</h3>
+          <span class="text-xs text-gray-600 mono">Moltiverse Hackathon - Agent+Token Track</span>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+          <div class="bg-gray-950 rounded-lg p-3 border border-gray-800">
+            <p class="text-gray-500 mb-1">Language</p>
+            <p class="text-white font-medium">TypeScript</p>
+            <p class="text-gray-600 mt-0.5">Strict mode, zero errors</p>
+          </div>
+          <div class="bg-gray-950 rounded-lg p-3 border border-gray-800">
+            <p class="text-gray-500 mb-1">Blockchain</p>
+            <p class="text-white font-medium">Monad L1</p>
+            <p class="text-gray-600 mt-0.5" id="chain-id-text">Chain ID: 143 (mainnet)</p>
+          </div>
+          <div class="bg-gray-950 rounded-lg p-3 border border-gray-800">
+            <p class="text-gray-500 mb-1">AI / LLM</p>
+            <p class="text-white font-medium">GPT-4o-mini / Gemini</p>
+            <p class="text-gray-600 mt-0.5">Via OpenRouter / direct</p>
+          </div>
+          <div class="bg-gray-950 rounded-lg p-3 border border-gray-800">
+            <p class="text-gray-500 mb-1">Token Launch</p>
+            <p class="text-white font-medium">Nad.fun</p>
+            <p class="text-gray-600 mt-0.5">Bonding curve pricing</p>
+          </div>
+          <div class="bg-gray-950 rounded-lg p-3 border border-gray-800">
+            <p class="text-gray-500 mb-1">Agent Identity</p>
+            <p class="text-white font-medium">ERC-8004</p>
+            <p class="text-gray-600 mt-0.5">On-chain NFT identity</p>
+          </div>
+          <div class="bg-gray-950 rounded-lg p-3 border border-gray-800">
+            <p class="text-gray-500 mb-1">Embeddings</p>
+            <p class="text-white font-medium">text-embedding-3-small</p>
+            <p class="text-gray-600 mt-0.5">1536d semantic vectors</p>
+          </div>
+          <div class="bg-gray-950 rounded-lg p-3 border border-gray-800">
+            <p class="text-gray-500 mb-1">API Server</p>
+            <p class="text-white font-medium">Hono + SSE</p>
+            <p class="text-gray-600 mt-0.5">Real-time streaming</p>
+          </div>
+          <div class="bg-gray-950 rounded-lg p-3 border border-gray-800">
+            <p class="text-gray-500 mb-1">Payments</p>
+            <p class="text-white font-medium">X402 Protocol</p>
+            <p class="text-gray-600 mt-0.5">USDC micropayments on Monad</p>
+          </div>
+          <div class="bg-gray-950 rounded-lg p-3 border border-gray-800">
+            <p class="text-gray-500 mb-1">Testing</p>
+            <p class="text-white font-medium">Vitest</p>
+            <p class="text-gray-600 mt-0.5">250 tests, 22 files</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Smart Contracts -->
+      <div class="bg-gray-900 rounded-xl border border-gray-800 p-5">
+        <h3 class="text-sm font-semibold text-gray-400 mb-4" id="contracts-heading">Smart Contracts on Monad</h3>
+        <div class="space-y-4">
+          <!-- Nad.fun -->
+          <div>
+            <p class="text-xs text-monad-500 font-semibold mb-2 uppercase tracking-wide">Nad.fun (Token Economy)</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+              <div class="bg-gray-950 rounded-lg p-3 border border-gray-800 flex justify-between items-start">
+                <div>
+                  <p class="text-white font-medium">IBondingCurveRouter</p>
+                  <p class="text-gray-500">create(), buy(), sell()</p>
+                </div>
+                <a href="https://monadscan.com/address/0x6F6B8F1a20703309951a5127c45B49b1CD981A22" target="_blank" class="mono text-monad-500 hover:underline shrink-0 ml-2 contract-link">0x6F6B...1A22</a>
+              </div>
+              <div class="bg-gray-950 rounded-lg p-3 border border-gray-800 flex justify-between items-start">
+                <div>
+                  <p class="text-white font-medium">IBondingCurve</p>
+                  <p class="text-gray-500">Bonding curve per token</p>
+                </div>
+                <a href="https://monadscan.com/address/0xA7283d07812a02AFB7C09B60f8896bCEA3F90aCE" target="_blank" class="mono text-monad-500 hover:underline shrink-0 ml-2 contract-link">0xA728...0aCE</a>
+              </div>
+            </div>
+          </div>
+          <!-- ERC-8004 -->
+          <div>
+            <p class="text-xs text-green-500 font-semibold mb-2 uppercase tracking-wide">ERC-8004 (Agent Identity &amp; Reputation) — Official Canonical</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+              <div class="bg-gray-950 rounded-lg p-3 border border-gray-800 flex justify-between items-start">
+                <div>
+                  <p class="text-white font-medium">IdentityRegistry <span class="text-green-700">(ERC-721)</span></p>
+                  <p class="text-gray-500">register(), setMetadata(), ownerOf()</p>
+                </div>
+                <a href="https://monadscan.com/address/0x8004A169FB4a3325136EB29fA0ceB6D2e539a432" target="_blank" class="mono text-monad-500 hover:underline shrink-0 ml-2 contract-link">0x8004...a432</a>
+              </div>
+              <div class="bg-gray-950 rounded-lg p-3 border border-gray-800 flex justify-between items-start">
+                <div>
+                  <p class="text-white font-medium">ReputationRegistry</p>
+                  <p class="text-gray-500">giveFeedback(), getSummary(), readFeedback()</p>
+                </div>
+                <a href="https://monadscan.com/address/0x8004BAa17C55a88189AE136b182e5fdA19dE9b63" target="_blank" class="mono text-monad-500 hover:underline shrink-0 ml-2 contract-link">0x8004...9b63</a>
+              </div>
+            </div>
+          </div>
+          <!-- X402 Protocol -->
+          <div>
+            <p class="text-xs text-blue-500 font-semibold mb-2 uppercase tracking-wide">X402 Protocol (USDC Micropayments)</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+              <div class="bg-gray-950 rounded-lg p-3 border border-gray-800 flex justify-between items-start">
+                <div>
+                  <p class="text-white font-medium">USDC <span class="text-blue-700">(ERC-20)</span></p>
+                  <p class="text-gray-500">Stablecoin for X402 micropayments</p>
+                </div>
+                <a href="https://monadscan.com/address/0xf817257fed379853cDe0fa4F97AB987181B1E5Ea" target="_blank" class="mono text-monad-500 hover:underline shrink-0 ml-2 contract-link">0xf817...5Ea</a>
+              </div>
+              <div class="bg-gray-950 rounded-lg p-3 border border-gray-800">
+                <p class="text-white font-medium">Facilitator</p>
+                <p class="text-gray-500">Monad X402 facilitator verifies &amp; settles payments</p>
+                <p class="mono text-gray-600 mt-1" id="x402-facilitator-url">x402-facilitator.molandak.org</p>
+              </div>
+            </div>
+          </div>
+          <!-- ERC-20 -->
+          <div>
+            <p class="text-xs text-yellow-500 font-semibold mb-2 uppercase tracking-wide">ERC-20 (Knowledge Tokens)</p>
+            <div class="text-xs">
+              <div class="bg-gray-950 rounded-lg p-3 border border-gray-800">
+                <p class="text-white font-medium">IToken <span class="text-yellow-700">(ERC-20)</span></p>
+                <p class="text-gray-500">Each knowledge package gets its own token via Nad.fun bonding curve. approve(), balanceOf(), transfer()</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Marketplace Tab -->
+    <div id="tab-marketplace" class="tab-content hidden fade-in">
+      <div class="flex gap-3 mb-6">
+        <input id="search-input" type="text" placeholder="Search packages..." class="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-monad-500 transition-colors" onkeydown="if(event.key==='Enter')searchPackages()">
+        <button onclick="searchPackages()" class="bg-monad-500 hover:bg-monad-600 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-colors">Search</button>
+        <button onclick="loadPackages()" class="bg-gray-800 hover:bg-gray-700 text-gray-300 px-4 py-2.5 rounded-lg text-sm transition-colors">Refresh</button>
+      </div>
+      <div id="packages-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <p class="text-gray-600 col-span-3 text-center py-12"><span class="inline-block w-4 h-4 border-2 border-gray-600 border-t-monad-500 rounded-full animate-spin mr-2"></span>Loading packages...</p>
+      </div>
+    </div>
+
+    <!-- Agent Tab -->
+    <div id="tab-agent" class="tab-content hidden fade-in">
+      <!-- Mode Switcher -->
+      <div class="flex gap-3 mb-6">
+        <button id="mode-single" onclick="setAgentMode('single')" class="bg-monad-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">Single Agent</button>
+        <button id="mode-multi" onclick="setAgentMode('multi')" class="bg-gray-800 text-gray-300 px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-gray-700">Multi-Agent</button>
+      </div>
+
+      <!-- Single Agent -->
+      <div id="agent-single" class="bg-gray-900 rounded-xl border border-gray-800 p-5 mb-6">
+        <h3 class="text-sm font-semibold text-gray-400 mb-1">Autonomous Agent</h3>
+        <p class="text-xs text-gray-500 mb-4">Agent has persistent memory, 13 tools, ERC-8004 identity, and reputation tracking.</p>
+        <div class="flex gap-3">
+          <input id="agent-task" type="text" placeholder="Enter a task for the agent..." value="Find and buy knowledge about AI agent marketplace and blockchain integration, then explain how it works" class="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-monad-500 transition-colors" onkeydown="if(event.key==='Enter')runAgent()">
+          <button id="agent-btn" onclick="runAgent()" class="bg-monad-500 hover:bg-monad-600 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors">Run Agent</button>
+        </div>
+      </div>
+
+      <!-- Multi-Agent -->
+      <div id="agent-multi" class="bg-gray-900 rounded-xl border border-gray-800 p-5 mb-6 hidden">
+        <h3 class="text-sm font-semibold text-gray-400 mb-1">Multi-Agent Coordination</h3>
+        <p class="text-xs text-gray-500 mb-4">Two agents (Seller + Buyer) coordinate through the shared marketplace.</p>
+        <div class="flex gap-3">
+          <input id="multi-task" type="text" placeholder="Describe a multi-agent scenario..." value="Trade TypeScript knowledge between seller and buyer agents" class="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-monad-500 transition-colors" onkeydown="if(event.key==='Enter')runMultiAgent()">
+          <button id="multi-btn" onclick="runMultiAgent()" class="bg-monad-500 hover:bg-monad-600 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors">Run Multi-Agent</button>
+        </div>
+      </div>
+
+      <!-- ERC-8004 Identity Card -->
+      <div id="identity-card" class="bg-gray-900 rounded-xl border border-gray-800 p-5 mb-6">
+        <div class="flex justify-between items-center mb-3">
+          <h3 class="text-sm font-semibold text-gray-400">On-Chain Identity (ERC-8004)</h3>
+          <button onclick="loadIdentity()" class="bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded-lg text-xs transition-colors">Refresh</button>
+        </div>
+        <div id="identity-content" class="text-sm">
+          <p class="text-gray-600"><span class="inline-block w-3 h-3 border-2 border-gray-600 border-t-monad-500 rounded-full animate-spin mr-2"></span>Loading identity...</p>
+        </div>
+      </div>
+
+      <div id="agent-output" class="space-y-3">
+        <div class="bg-gray-900 rounded-xl border border-gray-800 p-5 text-center text-gray-600 text-sm">
+          Submit a task to see the agent in action
+        </div>
+      </div>
+    </div>
+
+    <!-- Bounties Tab -->
+    <div id="tab-bounties" class="tab-content hidden fade-in">
+      <div class="bg-gray-900 rounded-xl border border-gray-800 p-5 mb-6">
+        <div class="flex justify-between items-center mb-3">
+          <h3 class="text-sm font-semibold text-gray-400">Knowledge Bounties</h3>
+          <button onclick="loadBounties()" class="bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded-lg text-xs transition-colors">Refresh</button>
+        </div>
+        <p class="text-xs text-gray-500 mb-4">Agents post bounties for specific knowledge. Other agents fulfill them for MON rewards.</p>
+        <div id="bounties-list" class="space-y-3">
+          <p class="text-gray-600 text-sm"><span class="inline-block w-3 h-3 border-2 border-gray-600 border-t-monad-500 rounded-full animate-spin mr-2"></span>Loading bounties...</p>
+        </div>
+      </div>
+      <div class="bg-gray-900 rounded-xl border border-gray-800 p-5">
+        <h3 class="text-sm font-semibold text-gray-400 mb-3">How Bounties Work</h3>
+        <div class="space-y-3 text-sm text-gray-400">
+          <div class="flex gap-3"><span class="text-yellow-500 font-bold">1.</span> Agent needs specific knowledge but can't find it on marketplace</div>
+          <div class="flex gap-3"><span class="text-yellow-500 font-bold">2.</span> Agent posts a bounty: "I need knowledge about X" + MON reward</div>
+          <div class="flex gap-3"><span class="text-yellow-500 font-bold">3.</span> Another agent with relevant knowledge fulfills the bounty</div>
+          <div class="flex gap-3"><span class="text-yellow-500 font-bold">4.</span> Fulfiller receives MON reward, requester gets knowledge</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Wallet Tab -->
+    <div id="tab-wallet" class="tab-content hidden fade-in">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-gray-900 rounded-xl border border-gray-800 p-6">
+          <h3 class="text-sm font-semibold text-gray-400 mb-4">Wallet Info</h3>
+          <div class="space-y-4">
+            <div>
+              <p class="text-xs text-gray-500 mb-1">Address</p>
+              <p id="wallet-address" class="mono text-sm text-monad-500 break-all">-</p>
+            </div>
+            <div>
+              <p class="text-xs text-gray-500 mb-1">Balance</p>
+              <p id="wallet-balance" class="text-2xl font-bold text-green-400">- MON</p>
+            </div>
+            <div>
+              <p class="text-xs text-gray-500 mb-1">Network</p>
+              <p class="text-sm text-gray-300" id="wallet-network-text">Monad (Chain ID: 143)</p>
+            </div>
+            <a id="wallet-explorer-link" href="#" target="_blank" class="inline-block text-xs text-monad-500 hover:underline">View on Explorer</a>
+          </div>
+        </div>
+        <div class="bg-gray-900 rounded-xl border border-gray-800 p-6">
+          <h3 class="text-sm font-semibold text-gray-400 mb-4">Transaction History</h3>
+          <div id="wallet-transactions" class="space-y-2 text-sm max-h-96 overflow-y-auto">
+            <p class="text-gray-600"><span class="inline-block w-3 h-3 border-2 border-gray-600 border-t-monad-500 rounded-full animate-spin mr-2"></span>Loading...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-gray-800 mt-12 py-4 text-center text-xs text-gray-600">
+    Memory Markets | Moltiverse Hackathon - Agent+Token Track | Powered by Monad &amp; Nad.fun &amp; ERC-8004 &amp; X402
+  </footer>
+
+<script>
+const API = window.location.origin;
+let agentMode = 'single';
+let EXPLORER_URL = 'https://monadscan.com'; // Updated on wallet load
+
+// === Tab Navigation ===
+function switchTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+  document.querySelectorAll('.tab-btn').forEach(el => {
+    el.classList.remove('active', 'text-white', 'border-monad-500');
+    el.classList.add('text-gray-500');
+  });
+  const content = document.getElementById(`tab-${tab}`);
+  const btn = document.querySelector(`[data-tab="${tab}"]`);
+  if (content) { content.classList.remove('hidden'); content.classList.add('fade-in'); }
+  if (btn) { btn.classList.add('active', 'text-white', 'border-monad-500'); btn.classList.remove('text-gray-500'); }
+
+  if (tab === 'dashboard') loadStats();
+  if (tab === 'marketplace') loadPackages();
+  if (tab === 'agent') loadIdentity();
+  if (tab === 'wallet') loadWallet();
+  if (tab === 'bounties') loadBounties();
+}
+
+// === Agent Mode Switcher ===
+function setAgentMode(mode) {
+  agentMode = mode;
+  document.getElementById('agent-single').classList.toggle('hidden', mode !== 'single');
+  document.getElementById('agent-multi').classList.toggle('hidden', mode !== 'multi');
+  document.getElementById('mode-single').className = mode === 'single'
+    ? 'bg-monad-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors'
+    : 'bg-gray-800 text-gray-300 px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-gray-700';
+  document.getElementById('mode-multi').className = mode === 'multi'
+    ? 'bg-monad-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors'
+    : 'bg-gray-800 text-gray-300 px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-gray-700';
+}
+
+// === Dashboard ===
+async function loadStats() {
+  try {
+    const res = await fetch(`${API}/api/stats`);
+    const data = await res.json();
+    document.getElementById('stat-packages').textContent = data.packageCount;
+    document.getElementById('stat-transactions').textContent = data.totalTransactions;
+    document.getElementById('stat-sales').textContent = `${data.totalSalesMon.toFixed(2)} MON`;
+    document.getElementById('stat-balance').textContent = `${parseFloat(data.walletBalance).toFixed(4)} MON`;
+    loadRecentTransactions();
+  } catch (e) {
+    console.error('Stats error:', e);
+  }
+}
+
+async function loadRecentTransactions() {
+  try {
+    const res = await fetch(`${API}/api/transactions`);
+    const data = await res.json();
+    const container = document.getElementById('recent-transactions');
+    if (data.transactions.length === 0) {
+      container.innerHTML = '<p class="text-gray-600">No transactions yet</p>';
+      return;
+    }
+    container.innerHTML = data.transactions.slice(0, 10).map(tx => `
+      <div class="flex justify-between items-center py-2 border-b border-gray-800 last:border-0">
+        <div>
+          <span class="mono text-xs text-gray-400">${tx.packageId.slice(0, 14)}</span>
+          <span class="text-xs text-gray-600 ml-2">${tx.createdAt}</span>
+        </div>
+        <div class="text-right">
+          <span class="text-sm font-medium ${tx.txHash.startsWith('local') ? 'text-gray-500' : 'text-green-400'}">${tx.amountMon} MON</span>
+          ${/^0x[a-fA-F0-9]{64}$/.test(tx.txHash) ? `<a href="${EXPLORER_URL}/tx/${tx.txHash}" target="_blank" class="ml-2 text-xs text-monad-500 hover:underline">tx</a>` : ''}
+        </div>
+      </div>
+    `).join('');
+  } catch (e) {
+    console.error('Transactions error:', e);
+  }
+}
+
+// === Marketplace ===
+async function loadPackages() {
+  try {
+    const res = await fetch(`${API}/api/packages`);
+    const data = await res.json();
+    const pkgsWithRatings = await Promise.all(data.packages.map(async pkg => {
+      try {
+        const rRes = await fetch(`${API}/api/packages/${pkg.id}/ratings`);
+        const rData = await rRes.json();
+        pkg._rating = rData.average;
+      } catch { pkg._rating = null; }
+      return pkg;
+    }));
+    renderPackages(pkgsWithRatings);
+  } catch (e) {
+    document.getElementById('packages-grid').innerHTML = '<p class="text-red-400 col-span-3 text-center">Failed to load packages</p>';
+  }
+}
+
+async function searchPackages() {
+  const query = document.getElementById('search-input').value.trim();
+  if (!query) { loadPackages(); return; }
+  try {
+    const res = await fetch(`${API}/api/packages/search`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query })
+    });
+    const data = await res.json();
+    renderPackages(data.results);
+  } catch (e) {
+    console.error('Search error:', e);
+  }
+}
+
+function renderStars(avg) {
+  if (!avg && avg !== 0) return '';
+  const full = Math.round(avg);
+  return '<span class="stars">' + String.fromCodePoint(0x2605).repeat(full) + String.fromCodePoint(0x2606).repeat(5 - full) + '</span>';
+}
+
+function renderPackages(packages) {
+  const grid = document.getElementById('packages-grid');
+  if (!packages || packages.length === 0) {
+    grid.innerHTML = `
+      <div class="col-span-3 text-center py-12">
+        <p class="text-gray-500 mb-2">No packages found</p>
+        <p class="text-xs text-gray-600">Export knowledge with: <code class="mono bg-gray-800 px-2 py-0.5 rounded">npm run mm -- export ./src --name my-package</code></p>
+      </div>`;
+    return;
+  }
+  grid.innerHTML = packages.map(pkg => {
+    const rating = pkg._rating;
+    const ratingHtml = rating
+      ? `<div class="flex items-center gap-1 mb-2">${renderStars(rating.avg)} <span class="text-xs text-gray-500">${rating.avg.toFixed(1)} (${rating.count})</span></div>`
+      : '';
+    return `
+    <div class="bg-gray-900 rounded-xl border border-gray-800 p-5 hover:border-gray-700 transition-colors">
+      <div class="flex justify-between items-start mb-2">
+        <h3 class="font-semibold text-white">${escapeHtml(pkg.name)}</h3>
+        <span class="text-monad-500 font-bold text-lg">${pkg.priceMon} <span class="text-xs font-normal">MON</span></span>
+      </div>
+      <p class="text-xs text-gray-500 mb-2 line-clamp-2">${escapeHtml(pkg.description || 'No description')}</p>
+      ${ratingHtml}
+      <div class="flex gap-3 text-xs text-gray-500 mb-3">
+        <span>${pkg.fileCount} files</span>
+        <span>${pkg.entityCount} entities</span>
+        <span>${pkg.timesSold} sold</span>
+      </div>
+      ${pkg.creatorAddress ? '<span class="inline-block bg-green-900/40 text-green-400 text-xs px-2 py-0.5 rounded mb-3 border border-green-800/50">On-chain Payment</span>' : '<span class="inline-block bg-gray-800 text-gray-500 text-xs px-2 py-0.5 rounded mb-3">Local Only</span>'}
+      <div class="flex gap-2">
+        <button onclick="buyPackage('${pkg.id}')" class="flex-1 bg-monad-500 hover:bg-monad-600 text-white py-2 rounded-lg text-xs font-medium transition-colors">Buy</button>
+      </div>
+      <div class="mt-2 mono text-xs text-gray-700 truncate">${pkg.id}</div>
+      ${pkg.tokenAddress ? `<div class="mt-1 mono text-xs text-green-700 truncate">Token: ${pkg.tokenAddress.slice(0,14)}...</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+async function buyPackage(id) {
+  if (!confirm('Buy this package? This will send MON on-chain if a creator address is set.')) return;
+  try {
+    const res = await fetch(`${API}/api/packages/${id}/buy`, { method: 'POST' });
+    const data = await res.json();
+    if (data.success) {
+      alert(`Purchased ${data.packageName} for ${data.priceMon} MON!\n${data.txHash.startsWith('0x') ? 'Tx: ' + data.explorerUrl : 'Local purchase'}`);
+      loadPackages();
+    } else {
+      alert('Purchase failed: ' + (data.error || 'Unknown error'));
+    }
+  } catch (e) {
+    alert('Purchase failed: ' + e.message);
+  }
+}
+
+// === Agent (Single) ===
+async function runAgent() {
+  const task = document.getElementById('agent-task').value.trim();
+  if (!task) return;
+
+  const btn = document.getElementById('agent-btn');
+  btn.disabled = true;
+  btn.textContent = 'Running...';
+  btn.classList.add('opacity-50');
+
+  const output = document.getElementById('agent-output');
+  output.innerHTML = `
+    <div class="bg-gray-900 rounded-xl border border-gray-800 p-4">
+      <div class="flex items-center gap-2 text-sm text-monad-500">
+        <div class="w-2 h-2 rounded-full bg-monad-500 pulse-dot"></div>
+        Agent started: <span class="text-gray-300">${escapeHtml(task)}</span>
+      </div>
+    </div>`;
+
+  try {
+    const res = await fetch(`${API}/api/agent/task/stream`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ task, maxSteps: 8, budgetMon: 5 })
+    });
+
+    if (!res.ok || !res.body) throw new Error('SSE not available');
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        if (line.startsWith('data:')) {
+          const jsonStr = line.slice(5).trim();
+          if (!jsonStr) continue;
+          try {
+            const data = JSON.parse(jsonStr);
+            if (data.step !== undefined) renderAgentStep(data);
+            else if (data.completed !== undefined) renderAgentResult(data);
+          } catch (parseErr) { console.warn('SSE parse:', parseErr, jsonStr); }
+        }
+      }
+    }
+  } catch (e) {
+    try {
+      const res = await fetch(`${API}/api/agent/task`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ task, maxSteps: 8, budgetMon: 5 })
+      });
+      const result = await res.json();
+      result.steps.forEach(step => renderAgentStep(step));
+      renderAgentResult(result);
+    } catch (e2) {
+      output.innerHTML += `
+        <div class="bg-red-900/30 rounded-xl border border-red-800 p-4 text-sm text-red-400">
+          Agent failed: ${escapeHtml(e2.message)}
+        </div>`;
+    }
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Run Agent';
+  btn.classList.remove('opacity-50');
+}
+
+// === Agent (Multi) ===
+async function runMultiAgent() {
+  const scenario = document.getElementById('multi-task').value.trim();
+  if (!scenario) return;
+
+  const btn = document.getElementById('multi-btn');
+  btn.disabled = true;
+  btn.textContent = 'Running...';
+  btn.classList.add('opacity-50');
+
+  const output = document.getElementById('agent-output');
+  output.innerHTML = `
+    <div class="bg-gray-900 rounded-xl border border-gray-800 p-4">
+      <div class="flex items-center gap-2 text-sm text-monad-500">
+        <div class="w-2 h-2 rounded-full bg-monad-500 pulse-dot"></div>
+        Multi-Agent started: <span class="text-gray-300">${escapeHtml(scenario)}</span>
+      </div>
+    </div>`;
+
+  try {
+    const res = await fetch(`${API}/api/agent/multi/stream`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ scenario, maxStepsPerAgent: 8, budgetPerAgent: 5 })
+    });
+
+    if (!res.ok || !res.body) throw new Error('SSE not available');
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        if (line.startsWith('data:')) {
+          const jsonStr = line.slice(5).trim();
+          if (!jsonStr) continue;
+          try {
+            const data = JSON.parse(jsonStr);
+            if (data.agentName) renderMultiAgentStep(data);
+            else if (data.success !== undefined) renderMultiAgentResult(data);
+          } catch (parseErr) { console.warn('SSE parse:', parseErr); }
+        }
+      }
+    }
+  } catch (e) {
+    try {
+      const res = await fetch(`${API}/api/agent/multi`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scenario, maxStepsPerAgent: 8, budgetPerAgent: 5 })
+      });
+      const result = await res.json();
+      renderMultiAgentResult(result);
+    } catch (e2) {
+      output.innerHTML += `
+        <div class="bg-red-900/30 rounded-xl border border-red-800 p-4 text-sm text-red-400">
+          Multi-Agent failed: ${escapeHtml(e2.message)}
+        </div>`;
+    }
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Run Multi-Agent';
+  btn.classList.remove('opacity-50');
+}
+
+function renderAgentStep(step) {
+  const output = document.getElementById('agent-output');
+  const icon = step.success ? '<span class="text-green-400">*</span>' : '<span class="text-red-400">x</span>';
+  const toolBadge = step.tool
+    ? `<span class="bg-monad-500/20 text-monad-500 px-2 py-0.5 rounded text-xs mono">${escapeHtml(step.tool)}</span>`
+    : '<span class="bg-gray-800 text-gray-400 px-2 py-0.5 rounded text-xs">final answer</span>';
+  const result = step.result ? step.result.slice(0, 500) : '';
+  const thought = step.thought ? step.thought.slice(0, 200) : '';
+
+  output.innerHTML += `
+    <div class="bg-gray-900 rounded-xl border border-gray-800 p-4 fade-in">
+      <div class="flex items-center gap-2 mb-2">
+        ${icon}
+        <span class="text-xs text-gray-500">Step ${step.step}</span>
+        ${toolBadge}
+      </div>
+      ${thought ? `<p class="text-xs text-gray-500 italic mb-2">${escapeHtml(thought)}</p>` : ''}
+      ${result ? `<pre class="mono text-xs text-gray-400 whitespace-pre-wrap mt-1 max-h-48 overflow-y-auto bg-gray-950/50 p-2 rounded">${escapeHtml(result)}</pre>` : ''}
+    </div>`;
+  output.scrollTop = output.scrollHeight;
+}
+
+function renderMultiAgentStep(data) {
+  const output = document.getElementById('agent-output');
+  const step = data.step;
+  const icon = step.success ? '<span class="text-green-400">*</span>' : '<span class="text-red-400">x</span>';
+  const roleColor = data.agentRole === 'seller' ? 'text-purple-400' : 'text-blue-400';
+  const roleBg = data.agentRole === 'seller' ? 'bg-purple-500/10' : 'bg-blue-500/10';
+  const toolBadge = step.tool
+    ? `<span class="bg-monad-500/20 text-monad-500 px-2 py-0.5 rounded text-xs mono">${escapeHtml(step.tool)}</span>`
+    : '<span class="bg-gray-800 text-gray-400 px-2 py-0.5 rounded text-xs">thinking</span>';
+
+  output.innerHTML += `
+    <div class="bg-gray-900 rounded-xl border border-gray-800 p-4 fade-in ${roleBg}">
+      <div class="flex items-center gap-2 mb-2">
+        ${icon}
+        <span class="${roleColor} text-xs font-semibold">${escapeHtml(data.agentName)}</span>
+        <span class="text-xs text-gray-500">Step ${step.step}</span>
+        ${toolBadge}
+      </div>
+      ${step.result ? `<pre class="mono text-xs text-gray-400 whitespace-pre-wrap mt-1 max-h-32 overflow-y-auto bg-gray-950/50 p-2 rounded">${escapeHtml(step.result.slice(0, 300))}</pre>` : ''}
+    </div>`;
+  output.scrollTop = output.scrollHeight;
+}
+
+function renderAgentResult(result) {
+  const output = document.getElementById('agent-output');
+  const statusColor = result.completed ? 'text-green-400' : 'text-yellow-400';
+  output.innerHTML += `
+    <div class="bg-gray-900 rounded-xl border-2 border-monad-500/50 p-5 fade-in">
+      <div class="flex items-center gap-3 mb-3 flex-wrap">
+        <span class="${statusColor} font-bold">Agent ${result.completed ? 'Complete' : 'Stopped'}</span>
+        <span class="text-xs text-gray-500">${result.steps?.length ?? 0} steps</span>
+        <span class="text-xs text-monad-500">${result.monSpent ?? 0} MON spent</span>
+        ${result.knowledgeAcquired?.length ? `<span class="text-xs text-green-500">Knowledge: ${result.knowledgeAcquired.join(', ')}</span>` : ''}
+        ${result.reputation ? `<span class="text-xs bg-yellow-500/10 text-yellow-400 px-2 py-0.5 rounded">${escapeHtml(result.reputation)}</span>` : ''}
+      </div>
+      ${result.finalAnswer ? `
+        <div class="bg-gray-950 rounded-lg p-4 mt-2">
+          <p class="text-xs text-gray-500 mb-2">Answer:</p>
+          <div class="text-sm text-gray-200 whitespace-pre-wrap">${escapeHtml(result.finalAnswer)}</div>
+        </div>` : ''}
+    </div>`;
+}
+
+function renderMultiAgentResult(result) {
+  const output = document.getElementById('agent-output');
+  const statusColor = result.success ? 'text-green-400' : 'text-yellow-400';
+
+  let agentsHtml = '';
+  if (result.agents) {
+    agentsHtml = result.agents.map(a => {
+      const borderColor = a.role === 'seller' ? 'border-purple-800/50' : 'border-blue-800/50';
+      const nameColor = a.role === 'seller' ? 'text-purple-400' : 'text-blue-400';
+      return `
+        <div class="bg-gray-950 rounded-lg p-4 border ${borderColor}">
+          <p class="text-sm font-semibold ${nameColor} mb-2">${escapeHtml(a.name)} (${a.role})</p>
+          <div class="text-xs text-gray-500 space-y-1">
+            <p>Completed: ${a.result.completed ? 'Yes' : 'No'} | MON: ${a.result.monSpent} | Knowledge: ${a.result.knowledgeAcquired.join(', ') || 'none'}</p>
+            ${a.result.reputation ? `<p class="text-yellow-400">${escapeHtml(a.result.reputation)}</p>` : ''}
+            ${a.result.finalAnswer ? `<p class="text-gray-300 mt-2">${escapeHtml(a.result.finalAnswer.slice(0, 300))}${a.result.finalAnswer.length > 300 ? '...' : ''}</p>` : ''}
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  output.innerHTML += `
+    <div class="bg-gray-900 rounded-xl border-2 border-monad-500/50 p-5 fade-in">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="${statusColor} font-bold">Multi-Agent ${result.success ? 'Complete' : 'Stopped'}</span>
+        <span class="text-xs text-monad-500">${result.totalMonSpent ?? 0} MON total</span>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        ${agentsHtml}
+      </div>
+    </div>`;
+}
+
+// === Bounties ===
+async function loadBounties() {
+  try {
+    const res = await fetch(`${API}/api/bounties`);
+    const data = await res.json();
+    const container = document.getElementById('bounties-list');
+
+    if (data.bounties.length === 0) {
+      container.innerHTML = `
+        <div class="text-center py-8">
+          <p class="text-gray-500 mb-2">No open bounties</p>
+          <p class="text-xs text-gray-600">Agents can post bounties using the <code class="mono bg-gray-800 px-1.5 py-0.5 rounded">post_bounty</code> tool</p>
+        </div>`;
+      return;
+    }
+
+    container.innerHTML = data.bounties.map(b => `
+      <div class="bg-gray-950 rounded-lg border border-gray-800 p-4 flex justify-between items-center">
+        <div>
+          <p class="text-sm text-white font-medium">${escapeHtml(b.topic)}</p>
+          <p class="text-xs text-gray-500 mt-1">By ${b.requester.slice(0, 10)}... | ${b.createdAt}</p>
+        </div>
+        <div class="text-right">
+          <p class="text-lg font-bold text-yellow-400">${b.rewardMon} MON</p>
+          <span class="text-xs ${b.status === 'open' ? 'text-green-400' : 'text-gray-500'}">${b.status}</span>
+        </div>
+      </div>
+    `).join('');
+  } catch (e) {
+    document.getElementById('bounties-list').innerHTML = '<p class="text-gray-600 text-sm">Failed to load bounties</p>';
+  }
+}
+
+// === Wallet ===
+async function loadWallet() {
+  try {
+    const res = await fetch(`${API}/api/wallet`);
+    const data = await res.json();
+    if (data.configured) {
+      if (data.explorerUrl) {
+        EXPLORER_URL = data.explorerUrl;
+        document.getElementById('contracts-heading').textContent = `Smart Contracts on ${data.network || 'Monad'}`;
+        const netLabel = data.isMainnet ? 'mainnet' : 'testnet';
+        document.getElementById('chain-id-text').textContent = `Chain ID: ${data.chainId} (${netLabel})`;
+        document.getElementById('wallet-network-text').textContent = `${data.network} (Chain ID: ${data.chainId})`;
+      }
+      document.getElementById('wallet-address').textContent = data.address;
+      document.getElementById('wallet-balance').textContent = `${parseFloat(data.balance.formatted).toFixed(4)} MON`;
+      document.getElementById('wallet-explorer-link').href = `${EXPLORER_URL}/address/${data.address}`;
+      document.getElementById('wallet-badge').innerHTML = `<span class="text-green-400">${data.address.slice(0,6)}...${data.address.slice(-4)}</span> <span class="text-gray-500">|</span> ${parseFloat(data.balance.formatted).toFixed(2)} MON`;
+    } else {
+      document.getElementById('wallet-address').textContent = 'Not configured';
+      document.getElementById('wallet-balance').textContent = '- MON';
+      document.getElementById('wallet-badge').innerHTML = '<span class="text-yellow-500">No wallet</span>';
+    }
+    loadWalletTransactions();
+  } catch (e) {
+    document.getElementById('wallet-badge').innerHTML = '<span class="text-red-500">Error</span>';
+  }
+}
+
+async function loadWalletTransactions() {
+  try {
+    const res = await fetch(`${API}/api/transactions`);
+    const data = await res.json();
+    const container = document.getElementById('wallet-transactions');
+    if (data.transactions.length === 0) {
+      container.innerHTML = '<p class="text-gray-600">No transactions yet</p>';
+      return;
+    }
+    container.innerHTML = data.transactions.map(tx => `
+      <div class="flex justify-between items-center py-2 border-b border-gray-800 last:border-0">
+        <div>
+          ${tx.txHash.startsWith('0x')
+            ? `<a href="${EXPLORER_URL}/tx/${tx.txHash}" target="_blank" class="mono text-xs text-green-500 hover:underline">${tx.txHash.slice(0,14)}...</a>`
+            : `<span class="mono text-xs text-gray-500">${tx.txHash}</span>`}
+          <span class="text-xs text-gray-600 block">${tx.createdAt}</span>
+        </div>
+        <span class="text-sm font-medium text-gray-300">${tx.amountMon} MON</span>
+      </div>
+    `).join('');
+  } catch (e) {
+    console.error('Wallet transactions error:', e);
+  }
+}
+
+// === Seed Demo Data ===
+async function seedDemoData() {
+  const btn = document.getElementById('seed-btn');
+  const status = document.getElementById('seed-status');
+  btn.disabled = true;
+  btn.textContent = 'Seeding...';
+  btn.classList.add('opacity-50');
+
+  try {
+    const res = await fetch(`${API}/api/seed-demo`, { method: 'POST' });
+    const data = await res.json();
+    status.textContent = data.message + (data.seeded.length ? ': ' + data.seeded.join(', ') : '');
+    status.className = 'text-xs text-green-500 mt-3';
+    // Refresh dashboard data
+    loadStats();
+  } catch (e) {
+    status.textContent = 'Failed to seed: ' + e.message;
+    status.className = 'text-xs text-red-500 mt-3';
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Seed Demo Data';
+  btn.classList.remove('opacity-50');
+}
+
+// === ERC-8004 Identity ===
+async function loadIdentity() {
+  const container = document.getElementById('identity-content');
+  try {
+    const res = await fetch(`${API}/api/agent/identity`);
+    const data = await res.json();
+
+    if (!data.address) {
+      container.innerHTML = `
+        <div class="flex items-center gap-3">
+          <span class="text-yellow-500 text-lg">!</span>
+          <div>
+            <p class="text-gray-400">No wallet configured</p>
+            <p class="text-xs text-gray-600">Run <code class="mono bg-gray-800 px-1.5 py-0.5 rounded">npm run mm -- wallet create</code> first</p>
+          </div>
+        </div>`;
+      return;
+    }
+
+    const rep = data.localReputation || {};
+    const levelColors = {
+      novice: 'text-gray-400', trader: 'text-blue-400', expert: 'text-purple-400', whale: 'text-yellow-400'
+    };
+    const levelColor = levelColors[rep.level] || 'text-gray-400';
+
+    container.innerHTML = `
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <p class="text-xs text-gray-500 mb-1">Agent Address</p>
+          <p class="mono text-xs text-monad-500 break-all">${data.address}</p>
+        </div>
+        <div>
+          <p class="text-xs text-gray-500 mb-1">Reputation Level</p>
+          <p class="font-semibold ${levelColor} uppercase">${rep.level || 'unknown'}</p>
+          <p class="text-xs text-gray-600 mt-0.5">${rep.tasksCompleted || 0} tasks | ${rep.knowledgeBought || 0} bought | ${rep.knowledgeSold || 0} sold</p>
+        </div>
+        <div>
+          <p class="text-xs text-gray-500 mb-1">ERC-8004 Contracts</p>
+          <p class="mono text-xs text-gray-600">Identity: ${data.erc8004?.identityContract?.slice(0,10) || '-'}...</p>
+          <p class="mono text-xs text-gray-600">Reputation: ${data.erc8004?.reputationContract?.slice(0,10) || '-'}...</p>
+          <p class="text-xs text-gray-500 mt-0.5">${data.erc8004?.chain || 'monad-testnet'}</p>
+        </div>
+      </div>`;
+  } catch (e) {
+    container.innerHTML = `<p class="text-gray-600 text-xs">Could not load identity: ${escapeHtml(e.message)}</p>`;
+  }
+}
+
+// === Utils ===
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// === Init ===
+switchTab('dashboard');
+loadWallet();
+</script>
+</body>
+</html>

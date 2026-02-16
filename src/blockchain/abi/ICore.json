@@ -1,0 +1,57 @@
+[
+  {
+    "type": "function",
+    "name": "buy",
+    "inputs": [
+      { "name": "amountIn", "type": "uint256" },
+      { "name": "fee", "type": "uint256" },
+      { "name": "token", "type": "address" },
+      { "name": "to", "type": "address" },
+      { "name": "deadline", "type": "uint256" }
+    ],
+    "outputs": [],
+    "stateMutability": "payable"
+  },
+  {
+    "type": "function",
+    "name": "sell",
+    "inputs": [
+      { "name": "amountIn", "type": "uint256" },
+      { "name": "token", "type": "address" },
+      { "name": "to", "type": "address" },
+      { "name": "deadline", "type": "uint256" }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "exactOutBuy",
+    "inputs": [
+      { "name": "maxAmountIn", "type": "uint256" },
+      { "name": "amountOut", "type": "uint256" },
+      { "name": "token", "type": "address" },
+      { "name": "to", "type": "address" },
+      { "name": "deadline", "type": "uint256" }
+    ],
+    "outputs": [],
+    "stateMutability": "payable"
+  },
+  {
+    "type": "function",
+    "name": "createCurve",
+    "inputs": [
+      { "name": "creator", "type": "address" },
+      { "name": "name", "type": "string" },
+      { "name": "symbol", "type": "string" },
+      { "name": "tokenURI", "type": "string" },
+      { "name": "amountIn", "type": "uint256" },
+      { "name": "fee", "type": "uint256" }
+    ],
+    "outputs": [
+      { "name": "curve", "type": "address" },
+      { "name": "token", "type": "address" }
+    ],
+    "stateMutability": "payable"
+  }
+]
